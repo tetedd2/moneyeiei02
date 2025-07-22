@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ระบบเก็บเงิน 30 บัญชี</title>
+  <style>
+    body {
+      font-family: 'Kanit', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f8f8;
+    }
+    h2 {
+      margin-top: 40px;
+    }
+    select, input[type="number"], button {
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .summary {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>ระบบเก็บเงิน 30 บัญชี</h1>
+
+  <h2>ทำรายการจ่ายเงิน</h2>
+  <form id="paymentForm">
+    <label for="username">เลือกบัญชี:</label>
+    <select id="username" required>
+      <option value="" disabled selected>-- เลือกบัญชี --</option>
+    </select>
+    <br>
+    <label for="amount">จำนวนเงินที่จ่าย (บาท):</label>
+    <input type="number" id="amount" min="1" required>
+    <button type="submit">บันทึก</button>
+  </form>
+
+  <h2>บัญชีกลาง (แสดงยอดรวมรายวัน)</h2>
+  <div id="centralAccount"></div>
+
+  <h2>ดูข้อมูลบัญชีผู้ใช้</h2>
+  <select id="viewUser">
+    <option value="" disabled selected>-- เลือกบัญชีผู้ใช้ --</option>
+  </select>
+  <div id="userAccount"></div>
+
+  <script>
+    const usernames = Array.from({ length: 30 }, (_, i) => `user${(i + 1).toString().padStart(2, '0')}`);
+    const usernameSelect = document.getElementById('username');
+    const viewUserSelect = document.getElementById('viewUser');
+    const centralAccountDiv = document.getElementById('centralAccount');
+    const userAccountDiv = document.getElementById('userAccount');
+
+    // เติมบัญชี 30 รายชื่อ
+    usernames.forEach(user => {
+      const option1 = document.createElement('option');
+      option1.value = user;
+      option1.textContent = user;
+      usernameSelect.appendChild(option1);
+
+      const option2 = document.createElement('option');
+      option2.value = user;
+      option2.textContent = user;
+      viewUserSelect.appendChild(option2);
+    });
+
+    // จัดเก็บข้อมูล
+    function savePayment(user, amount) {
+      const payments = JSON.parse(localStorage.getItem('payments') || '[]');
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      payments.push({ user, amount: parseFloat(amount), date: today });
+      localStorage.setItem('payments', JSON.stringify(payments));
+    }
+
+    function getPayments() {
+      return JSON.parse(localStorage.getItem('payments') || '[]');
+    }
+
+    // อัปเดตบัญชีกลาง
+    function updateCentralAccount() {
+      const payments = getPayments();
+      const grouped = {};
+
+      payments.forEach(p => {
+        if (!grouped[p.date]) grouped[p.date] = 0;
+        grouped[p.date] += p.amount;
+      });
+
+      let html = `<table><tr><th>วันที่</th><th>ยอดรวมทั้งหมด (บาท)</th></tr>`;
+      for (const [date, total] of Object.entries(grouped)) {
+        html += `<tr><td>${date}</td><td>${total.toFixed(2)}</td></tr>`;
+      }
+      html += `</table>`;
+      centralAccountDiv.innerHTML = html;
+    }
+
+    // แสดงข้อมูลเฉพาะผู้ใช้
+    function updateUserAccount(user) {
+      const payments = getPayments().filter(p => p.user === user);
+      if (payments.length === 0) {
+        userAccountDiv.innerHTML = `<p>ยังไม่มีการจ่ายเงินจากบัญชี ${user}</p>`;
+        return;
+      }
+
+      let total = 0;
+      let html = `<table><tr><th>วันที่</th><th>จำนวนที่จ่าย (บาท)</th></tr>`;
+      payments.forEach(p => {
+        html += `<tr><td>${p.date}</td><td>${p.amount.toFixed(2)}</td></tr>`;
+        total += p.amount;
+      });
+      html += `</table><div class="summary">ยอดรวมทั้งหมด: ${total.toFixed(2)} บาท</div>`;
+      userAccountDiv.innerHTML = html;
+    }
+
+    // บันทึกการจ่ายเงิน
+    document.getElementById('paymentForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const user = usernameSelect.value;
+      const amount = document.getElementById('amount').value;
+      if (user && amount > 0) {
+        savePayment(user, amount);
+        updateCentralAccount();
+        updateUserAccount(user);
+        alert("บันทึกข้อมูลเรียบร้อย");
+        this.reset();
+      }
+    });
+
+    // เมื่อเลือกดูบัญชีผู้ใช้
+    viewUserSelect.addEventListener('change', function () {
+      updateUserAccount(this.value);
+    });
+
+    // โหลดข้อมูลเมื่อเข้าเว็บ
+    window.addEventListener('load', () => {
+      updateCentralAccount();
+    });
+  </script>
+
+</body>
+</html>

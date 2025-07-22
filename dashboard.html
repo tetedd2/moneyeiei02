@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>แดชบอร์ดบัญชี 30 คน</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- ชื่อเล่นด้านบนขวา -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h1>ระบบเก็บเงิน 30 บัญชี</h1>
+      <div id="nicknameDisplay" style="font-weight:bold; color:#0984e3;"></div>
+    </div>
+
+    <button id="logoutBtn">ออกจากระบบ</button>
+
+    <h2>บันทึกการจ่ายเงิน</h2>
+    <form id="paymentForm">
+      <input type="number" id="amount" placeholder="จำนวนเงินที่จ่าย (บาท)" required />
+      <button type="submit">บันทึก</button>
+    </form>
+
+    <h2>ยอดรวมรายวันทั้งหมด</h2>
+    <canvas id="dailyChart" class="chart-canvas"></canvas>
+    <div id="totalSum" class="summary" style="text-align:center; margin-top: 10px;"></div>
+
+    <h2>ยอดของฉัน (ย้อนหลัง)</h2>
+    <canvas id="myChart" class="chart-canvas"></canvas>
+
+    <div id="adminPanel" style="display: none;">
+      <h2 style="color:red;">🛠️ แผงควบคุมผู้ดูแล</h2>
+      <button id="resetBtn">รีเซตข้อมูลทั้งหมด</button>
+    </div>
+  </div>
+
+  <!-- เรียงลำดับให้ถูก -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>

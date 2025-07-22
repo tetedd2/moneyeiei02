@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>เข้าสู่ระบบ | ระบบบัญชี 30 บัญชี</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>ระบบบัญชี 30 บัญชี</h1>
+    <div id="form-container">
+      <h2 id="formTitle">เข้าสู่ระบบ</h2>
+      <form id="authForm">
+        <input type="email" id="email" placeholder="อีเมล" required />
+        <input type="password" id="password" placeholder="รหัสผ่าน" required />
+        <input type="text" id="nickname" placeholder="ชื่อเล่น" style="display:none;" />
+        <button type="submit" id="submitBtn">เข้าสู่ระบบ</button>
+      </form>
+      <p id="toggleText">ยังไม่มีบัญชี? <a href="#" id="toggleLink">สมัครสมาชิก</a></p>
+      <p id="error" style="color:red;"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById("authForm");
+    const toggleLink = document.getElementById("toggleLink");
+    const toggleText = document.getElementById("toggleText");
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const nicknameInput = document.getElementById("nickname");
+    const errorEl = document.getElementById("error");
+
+    let isLogin = true;
+
+    toggleLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      isLogin = !isLogin;
+      formTitle.innerText = isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก";
+      submitBtn.innerText = isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก";
+      toggleText.innerHTML = isLogin
+        ? 'ยังไม่มีบัญชี? <a href="#" id="toggleLink">สมัครสมาชิก</a>'
+        : 'มีบัญชีแล้ว? <a href="#" id="toggleLink">เข้าสู่ระบบ</a>';
+      nicknameInput.style.display = isLogin ? "none" : "block";
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = form.email.value;
+      const password = form.password.value;
+      const nickname = nicknameInput.value;
+
+      try {
+        if (isLogin) {
+          await signInWithEmailAndPassword(auth, email, password);
+        } else {
+          await createUserWithEmailAndPassword(auth, email, password);
+          // บันทึกชื่อเล่นลง Firestore
+          await setDoc(doc(db, "users", email), {
+            nickname: nickname || "ไม่ระบุ"
+          });
+        }
+        location.href = "dashboard.html";
+      } catch (error) {
+        errorEl.innerText = "❌ " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
